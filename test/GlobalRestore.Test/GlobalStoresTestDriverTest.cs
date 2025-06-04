@@ -13,11 +13,11 @@ public sealed class GlobalStoresTestDriverTest : IDisposable
     private TestInputTopic<string, string>? _inputTopic;
     private TestOutputTopic<string, string>? _outputTopic;
 
-    private readonly string APPLICATION_ID = "global-restore-test";
-    private readonly string STATE_STORE_NAME = "state";
-    private string GLOBAL_STATE_STORE_NAME => $"{STATE_STORE_NAME}-global";
-    private readonly string INPUT_TOPIC = "events";
-    private string OUTPUT_TOPIC => $"{APPLICATION_ID}-{STATE_STORE_NAME}-changelog";
+    private const string APPLICATION_ID = "global-restore-test";
+    private const string STATE_STORE_NAME = "state";
+    private const string GLOBAL_STATE_STORE_NAME = "state-global";
+    private const string INPUT_TOPIC = "events";
+    private static string OUTPUT_TOPIC => $"{APPLICATION_ID}-{STATE_STORE_NAME}-changelog";
 
     private StreamConfig config => new StreamConfig<StringSerDes, StringSerDes>()
     {
@@ -28,9 +28,11 @@ public sealed class GlobalStoresTestDriverTest : IDisposable
     };
 
     [Theory]
-    [InlineData(TopologyTestDriver.Mode.ASYNC_CLUSTER_IN_MEMORY)]
-    [InlineData(TopologyTestDriver.Mode.SYNC_TASK)]
-    public void TestGlobalStore(TopologyTestDriver.Mode mode)
+    [InlineData(TopologyTestDriver.Mode.ASYNC_CLUSTER_IN_MEMORY, STATE_STORE_NAME)]
+    [InlineData(TopologyTestDriver.Mode.ASYNC_CLUSTER_IN_MEMORY, GLOBAL_STATE_STORE_NAME)]
+    [InlineData(TopologyTestDriver.Mode.SYNC_TASK, STATE_STORE_NAME)]
+    [InlineData(TopologyTestDriver.Mode.SYNC_TASK, GLOBAL_STATE_STORE_NAME)]
+    public void TestGlobalStore(TopologyTestDriver.Mode mode, string assertStoreName)
     {
         _builder.Stream<string, string>(INPUT_TOPIC)
             .Peek((k, v, c) => Console.WriteLine($"Event => Key: {k}, Value: {v}"))
@@ -49,16 +51,13 @@ public sealed class GlobalStoresTestDriverTest : IDisposable
         ProduceMessage(INPUT_TOPIC, "key2", "value2");
         ProduceMessage(INPUT_TOPIC, "key3", "value3");
 
-        foreach (var storeName in new string[] { STATE_STORE_NAME, GLOBAL_STATE_STORE_NAME })
-        {
-            var store = _client.GetKeyValueStore<string, string>(storeName);
-            var items = store.All();
+        var store = _client.GetKeyValueStore<string, string>(assertStoreName);
+        var items = store.All();
 
-            Assert.Equal(3, items.Count());
-            Assert.Contains(items, item => item.Key == "key1" && item.Value == "value1");
-            Assert.Contains(items, item => item.Key == "key2" && item.Value == "value2");
-            Assert.Contains(items, item => item.Key == "key3" && item.Value == "value3");
-        }
+        Assert.Equal(3, items.Count());
+        Assert.Contains(items, item => item.Key == "key1" && item.Value == "value1");
+        Assert.Contains(items, item => item.Key == "key2" && item.Value == "value2");
+        Assert.Contains(items, item => item.Key == "key3" && item.Value == "value3");
     }
 
     private void ProduceMessage(string topic, string key, string value)
