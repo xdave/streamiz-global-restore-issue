@@ -27,8 +27,10 @@ public sealed class GlobalStoresTestDriverTest : IDisposable
         Guarantee = ProcessingGuarantee.EXACTLY_ONCE,
     };
 
-    [Fact]
-    public void TestGlobalStore()
+    [Theory]
+    [InlineData(TopologyTestDriver.Mode.ASYNC_CLUSTER_IN_MEMORY)]
+    [InlineData(TopologyTestDriver.Mode.SYNC_TASK)]
+    public void TestGlobalStore(TopologyTestDriver.Mode mode)
     {
         _builder.Stream<string, string>(INPUT_TOPIC)
             .Peek((k, v, c) => Console.WriteLine($"Event => Key: {k}, Value: {v}"))
@@ -39,7 +41,7 @@ public sealed class GlobalStoresTestDriverTest : IDisposable
 
         _builder.GlobalTable(OUTPUT_TOPIC, InMemory.As<string, string>(GLOBAL_STATE_STORE_NAME));
 
-        _client = new TopologyTestDriver(_builder.Build(), config, TopologyTestDriver.Mode.ASYNC_CLUSTER_IN_MEMORY);
+        _client = new TopologyTestDriver(_builder.Build(), config, mode);
         _inputTopic = _client.CreateInputTopic<string, string>(INPUT_TOPIC);
         _outputTopic = _client.CreateOuputTopic<string, string>(OUTPUT_TOPIC);
 
