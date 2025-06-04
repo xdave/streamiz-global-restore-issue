@@ -24,7 +24,7 @@ public sealed class GlobalStoresTestDriverTest : IDisposable
         ApplicationId = APPLICATION_ID,
         AutoOffsetReset = AutoOffsetReset.Earliest,
         AllowAutoCreateTopics = true,
-        Guarantee = ProcessingGuarantee.AT_LEAST_ONCE,
+        Guarantee = ProcessingGuarantee.EXACTLY_ONCE,
     };
 
     [Fact]
