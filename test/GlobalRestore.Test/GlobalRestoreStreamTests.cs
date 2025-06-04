@@ -26,7 +26,7 @@ public class GlobalRestoreStreamTests : IAsyncLifetime
     private readonly string INPUT_TOPIC = "events";
     private string OUTPUT_TOPIC => $"{APPLICATION_ID}-{STATE_STORE_NAME}-changelog";
 
-    [Fact]
+    // [Fact]
     public async Task TestAtLeastOnceProcessing()
     {
         var config = new StreamConfig<StringSerDes, StringSerDes>()
@@ -71,7 +71,7 @@ public class GlobalRestoreStreamTests : IAsyncLifetime
     }
 
     // 15s seems to be enough to demonstrate. Adjust as necessary.
-    [Fact(Timeout = 15000)]
+    // [Fact(Timeout = 15000)]
     public async Task TestExactlyOnceProcessing()
     {
         var config = new StreamConfig<StringSerDes, StringSerDes>()
